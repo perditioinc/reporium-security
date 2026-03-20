@@ -97,6 +97,17 @@ def check_secrets(repo_path: Path) -> SecretsCheckResult:
                         # Don't flag test assertions or pattern definitions
                         if "assert" in line.lower() or "r'" in line or 'r"' in line:
                             continue
+                        # Don't flag obvious test/placeholder values
+                        lower_line = line.lower()
+                        if any(p in lower_line for p in (
+                            "test-", "test_", "fake-", "fake_", "dummy",
+                            "example", "placeholder", "changeme", "xxx",
+                        )):
+                            continue
+                        # Don't flag conftest.py and test files
+                        fname = filepath.name.lower()
+                        if fname.startswith("test_") or fname in ("conftest.py",):
+                            continue
                         result.findings.append(
                             SecretFinding(
                                 file=str(filepath.relative_to(repo_path)),

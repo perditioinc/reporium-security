@@ -44,7 +44,6 @@ def check_history(repo_path: Path) -> HistoryCheckResult:
         proc = subprocess.run(
             ["git", "log", "-p", "--max-count=20"],
             capture_output=True,
-            text=True,
             cwd=str(repo_path),
             timeout=60,
         )
@@ -58,7 +57,8 @@ def check_history(repo_path: Path) -> HistoryCheckResult:
         result.skip_reason = "git log returned an error."
         return result
 
-    output = proc.stdout
+    # Decode with errors='replace' to handle binary content in diffs
+    output = proc.stdout.decode("utf-8", errors="replace")
     if not output.strip():
         # No commits yet
         return result
@@ -85,6 +85,15 @@ def check_history(repo_path: Path) -> HistoryCheckResult:
                 if 'r"' in line or "r'" in line:
                     continue
                 if "assert" in line.lower():
+                    continue
+                # Skip obvious test/placeholder values and test fixtures
+                lower_line = line.lower()
+                if any(p in lower_line for p in (
+                    "test-", "test_", "fake-", "fake_", "dummy",
+                    "example", "placeholder", "changeme", "xxx",
+                    "conftest", "fixture", "write_text(", "matched_text",
+                    "tmp_path", "mock", "expected",
+                )):
                     continue
 
                 result.findings.append(
