@@ -64,18 +64,44 @@ def check_history(repo_path: Path) -> HistoryCheckResult:
         return result
 
     current_commit = ""
+    current_file = ""
     for line in output.splitlines():
         if line.startswith("commit "):
             current_commit = line.split()[1][:12]
+            current_file = ""
+            continue
+
+        if line.startswith("diff --git"):
+            current_file = ""
+            continue
+
+        # Capture the target file path from the +++ diff header so we can
+        # skip documentation/audit files (markdown notes describing patterns
+        # or workflows trigger false positives that are not real secrets).
+        if line.startswith("+++"):
+            parts = line.split(maxsplit=1)
+            if len(parts) > 1:
+                target = parts[1].strip()
+                if target == "/dev/null":
+                    current_file = ""
+                elif target.startswith("b/"):
+                    current_file = target[2:]
+                else:
+                    current_file = target
             continue
 
         # Only scan diff additions
         if not line.startswith("+"):
             continue
 
-        # Skip diff headers
-        if line.startswith("+++"):
-            continue
+        # Skip lines from documentation files — markdown audit notes routinely
+        # quote the regexes themselves, which is a deterministic false positive.
+        if current_file:
+            lower_file = current_file.lower()
+            if lower_file.endswith((".md", ".rst", ".txt", ".markdown")):
+                continue
+            if "audit/" in lower_file or "docs/" in lower_file:
+                continue
 
         for pattern_name, compiled in COMPILED_PATTERNS.items():
             if compiled.search(line):

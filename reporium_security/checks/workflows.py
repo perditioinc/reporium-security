@@ -56,6 +56,17 @@ def _check_uses_sha(workflow_content: str, filename: str) -> list[WorkflowFindin
         stripped = line.strip()
         if "uses:" in stripped:
             action_ref = stripped.split("uses:")[-1].strip()
+            # Strip trailing inline YAML comment (e.g. "@<sha> # v4.2.2") so the
+            # SHA anchor still matches when versions are documented inline.
+            if "#" in action_ref:
+                action_ref = action_ref.split("#", 1)[0].strip()
+            if not action_ref:
+                continue
+            # Strip surrounding quotes if present
+            if (action_ref.startswith('"') and action_ref.endswith('"')) or (
+                action_ref.startswith("'") and action_ref.endswith("'")
+            ):
+                action_ref = action_ref[1:-1]
             # Skip local actions (./path)
             if action_ref.startswith("./") or action_ref.startswith(".\\"):
                 continue
