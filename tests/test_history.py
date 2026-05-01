@@ -82,3 +82,39 @@ class TestHistoryDocumentationSkip:
 
         result = check_history(tmp_path)
         assert result.passed, [f.matched_text for f in result.findings]
+
+    def test_tests_directory_is_skipped(self, tmp_path: Path):
+        """Stub kwarg values in test files must not trigger history findings.
+
+        Regression for the false-positive that turned reporium-api Security
+        Scan from A to F after PR #447 added two `_api_key="test"` lines in
+        a unit test. Pytest fixtures and parameter stubs are not credentials.
+        """
+        _init_repo(tmp_path)
+        test_file = tmp_path / "tests" / "test_backfill.py"
+        test_file.parent.mkdir()
+        test_file.write_text(
+            'async def test_backfill_invalidates_cache():\n'
+            '    result = await backfill(\n'
+            '        _api_key="test",\n'
+            '        _admin_key=None,\n'
+            '    )\n'
+        )
+        _git(tmp_path, "add", "-A")
+        _git(tmp_path, "commit", "-m", "test: add backfill cache invalidation test")
+
+        result = check_history(tmp_path)
+        assert result.passed, [f.matched_text for f in result.findings]
+
+    def test_real_secret_outside_tests_dir_still_detected(self, tmp_path: Path):
+        """Tests/ skip must not mask credentials in production code."""
+        _init_repo(tmp_path)
+        code = tmp_path / "app" / "settings.py"
+        code.parent.mkdir()
+        code.write_text('api_key = "sk-real-production-credential-here"\n')
+        _git(tmp_path, "add", "-A")
+        _git(tmp_path, "commit", "-m", "settings: add api key")
+
+        result = check_history(tmp_path)
+        assert not result.passed
+        assert any("api_key" in f.matched_text for f in result.findings)
