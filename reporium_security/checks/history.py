@@ -96,11 +96,17 @@ def check_history(repo_path: Path) -> HistoryCheckResult:
 
         # Skip lines from documentation files — markdown audit notes routinely
         # quote the regexes themselves, which is a deterministic false positive.
+        # Also skip test files: stub values like `_api_key="test"` match the
+        # regex but are pytest fixtures that never reach production. This was
+        # caught after reporium-api PR #447 added two such test stubs and
+        # turned the daily Security Scan from A to F overnight.
         if current_file:
             lower_file = current_file.lower()
             if lower_file.endswith((".md", ".rst", ".txt", ".markdown")):
                 continue
             if "audit/" in lower_file or "docs/" in lower_file:
+                continue
+            if "tests/" in lower_file or "/test_" in lower_file or lower_file.startswith("test_"):
                 continue
 
         for pattern_name, compiled in COMPILED_PATTERNS.items():
