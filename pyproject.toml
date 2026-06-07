@@ -24,6 +24,9 @@ dev = [
 reporium-security = "reporium_security.__main__:main"
 
 [tool.setuptools.packages.find]
+# Ship only the application package. Without this, flat-layout auto-discovery
+# also picks up the additive local/ dev substrate as a top-level package, which
+# breaks `pip install`. Keeps the published wheel limited to reporium_security.
 include = ["reporium_security*"]
 exclude = ["security*", "tests*"]
 

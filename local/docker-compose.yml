@@ -1,0 +1,52 @@
+# Local OSS substrate for reporium-security.
+# Cloud/network deps -> OSS local substitutes:
+#   GitHub (git clone https://github.com/...)  -> gitserver (git daemon, git://)
+#   OSV.dev advisory service (api.osv.dev)      -> osv-stub  (stdlib HTTPS stub)
+#   pip-audit / git binaries                    -> real OSS tools in scanner
+# Additive, local-only, $0. No secrets. Source mounted read-only.
+
+services:
+  gitserver:
+    build: ./gitserver
+    networks: [reporium]
+    volumes:
+      - ./seed:/seed:ro
+    expose:
+      - "9418"
+
+  osv-stub:
+    build: ./osv-stub
+    networks:
+      reporium:
+        aliases:
+          - pypi.org
+          - www.pypi.org
+    environment:
+      OSV_SEED: /data/vulns.json
+      OSV_PORT: "443"
+    volumes:
+      - ./osv-stub/vulns.json:/data/vulns.json:ro
+      - osv-certs:/certs
+    expose:
+      - "443"
+
+  scanner:
+    build: ./scanner
+    depends_on:
+      - gitserver
+      - osv-stub
+    networks: [reporium]
+    # pypi.org resolves to the osv-stub (PyPI JSON stub) container via its
+    # network alias (see osv-stub.networks.reporium.aliases). No extra_hosts.
+    volumes:
+      # Source mounted READ-ONLY: the substrate never edits the app.
+      - ../:/src:ro
+      - osv-certs:/certs:ro
+    working_dir: /work
+
+networks:
+  reporium:
+    driver: bridge
+
+volumes:
+  osv-certs:

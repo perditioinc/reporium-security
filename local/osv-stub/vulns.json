@@ -1,0 +1,32 @@
+{
+  "by_package": {
+    "jinja2==2.11.2": ["OSV-LOCAL-JINJA2-0001"]
+  },
+  "vulns": {
+    "OSV-LOCAL-JINJA2-0001": {
+      "id": "OSV-LOCAL-JINJA2-0001",
+      "summary": "Local fixture: HIGH severity template injection in jinja2 2.11.2",
+      "details": "HIGH severity. Synthetic record served by the local PyPI stub so the dependency check has a deterministic CVE to find. Not a real advisory; offline test fixture only.",
+      "aliases": ["CVE-LOCAL-0001"],
+      "modified": "2026-01-01T00:00:00Z",
+      "published": "2026-01-01T00:00:00Z",
+      "affected": [
+        {
+          "package": {"ecosystem": "PyPI", "name": "jinja2"},
+          "versions": ["2.11.2"],
+          "ranges": [
+            {
+              "type": "ECOSYSTEM",
+              "events": [
+                {"introduced": "0"},
+                {"fixed": "2.11.3"}
+              ]
+            }
+          ]
+        }
+      ],
+      "fix_versions": ["2.11.3"],
+      "severity": "HIGH"
+    }
+  }
+}
