@@ -1,5 +1,7 @@
 # reporium-security
 
+![License: MIT](https://img.shields.io/badge/license-MIT-brightgreen)
+
 <!-- perditio-badges -->
 [![Suite: Reporium](https://img.shields.io/badge/suite-Reporium-blue)](https://github.com/perditioinc)
 [![CI](https://github.com/perditioinc/reporium-security/actions/workflows/test.yml/badge.svg)](https://github.com/perditioinc/reporium-security/actions/workflows/test.yml)
