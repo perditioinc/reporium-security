@@ -1,0 +1,4 @@
+# build-time wheelhouse (populated by Dockerfile via pip download)
+wheelhouse/
+# local env overrides
+.env
