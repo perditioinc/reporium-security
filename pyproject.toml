@@ -23,6 +23,10 @@ dev = [
 [project.scripts]
 reporium-security = "reporium_security.__main__:main"
 
+[tool.setuptools.packages.find]
+include = ["reporium_security*"]
+exclude = ["security*", "tests*"]
+
 [tool.ruff]
 target-version = "py311"
 line-length = 100
